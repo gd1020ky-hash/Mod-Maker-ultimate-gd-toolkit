@@ -10,7 +10,7 @@ namespace sm {
 static Pathfinder g_pathfinder;
 
 // ============================================================
-// Existing Pathfinder functions
+// Pathfinder
 // ============================================================
 
 void Pathfinder::start() {
@@ -25,7 +25,7 @@ void Pathfinder::stop() {
 
 void Pathfinder::retry() {
     ++m_attempts;
-    log::info("Ultimate GD Toolkit: Pathfinder retry #{}", m_attempts);
+    log::info("Ultimate GD Toolkit: Pathfinder retry {}", m_attempts);
 }
 
 void Pathfinder::verify() {
@@ -61,78 +61,355 @@ bool RouteExporter::exportRoute(
     (void)format;
     (void)path;
 
-    log::info("Ultimate GD Toolkit: export requested");
+    log::info("Ultimate GD Toolkit: route export requested");
+
     return false;
 }
 
 // ============================================================
-// Main Toolkit menu
+// Simple Mod Menu
 // ============================================================
 
-class ToolkitMenu : public geode::Popup<> {
+class ModMenu : public FLAlertLayer {
+public:
+
+    static ModMenu* create() {
+        auto ret = new ModMenu();
+
+        if (ret && ret->init()) {
+            ret->autorelease();
+            return ret;
+        }
+
+        CC_SAFE_DELETE(ret);
+        return nullptr;
+    }
+
 protected:
 
-    CCLabelBMFont* m_title = nullptr;
-    CCLabelBMFont* m_pageTitle = nullptr;
-    CCLabelBMFont* m_content = nullptr;
+    bool init() {
 
-    CCMenu* m_tabs = nullptr;
+        if (!FLAlertLayer::init(
+            nullptr,
+            "Ultimate GD Toolkit",
+            "CLOSE",
+            nullptr,
+            420.f,
+            300.f
+        )) {
+            return false;
+        }
 
-    int m_currentTab = 0;
+        auto layer = this->m_mainLayer;
 
-    enum Tab {
-        Macro = 0,
-        PathfinderTab = 1,
-        FrameTools = 2,
-        Playback = 3,
-        Routes = 4,
-        Settings = 5,
-        Themes = 6
-    };
+        auto title = CCLabelBMFont::create(
+            "ULTIMATE GD TOOLKIT",
+            "bigFont.fnt"
+        );
 
-    bool setup() override {
+        title->setScale(0.65f);
 
-        this->setTitle("Ultimate GD Toolkit");
+        title->setPosition(
+            ccp(210.f, 245.f)
+        );
 
-        auto size = this->m_mainLayer->getContentSize();
+        layer->addChild(title);
 
         // ----------------------------------------------------
-        // Left tab panel
+        // Macro button
         // ----------------------------------------------------
 
-        auto leftBG = CCScale9Sprite::create(
-            "square02b_001.png"
+        auto macroButton =
+            CCMenuItemSpriteExtra::create(
+                ButtonSprite::create(
+                    "MACRO",
+                    "bigFont.fnt",
+                    "GJ_button_01.png",
+                    0.65f
+                ),
+                this,
+                menu_selector(ModMenu::onMacro)
+            );
+
+        macroButton->setPosition(
+            ccp(110.f, 185.f)
         );
 
-        leftBG->setContentSize(
-            CCSize(125.f, size.height - 45.f)
-        );
-
-        leftBG->setPosition(
-            ccp(
-                70.f,
-                size.height / 2.f
-            )
-        );
-
-        this->m_mainLayer->addChild(leftBG);
+        this->m_buttonMenu->addChild(macroButton);
 
         // ----------------------------------------------------
-        // Right content panel
+        // Pathfinder button
         // ----------------------------------------------------
 
-        auto rightBG = CCScale9Sprite::create(
-            "square02b_001.png"
+        auto pathButton =
+            CCMenuItemSpriteExtra::create(
+                ButtonSprite::create(
+                    "PATHFINDER",
+                    "bigFont.fnt",
+                    "GJ_button_01.png",
+                    0.65f
+                ),
+                this,
+                menu_selector(ModMenu::onPathfinder)
+            );
+
+        pathButton->setPosition(
+            ccp(310.f, 185.f)
         );
 
-        rightBG->setContentSize(
-            CCSize(
-                size.width - 155.f,
-                size.height - 45.f
-            )
+        this->m_buttonMenu->addChild(pathButton);
+
+        // ----------------------------------------------------
+        // Frame Tools
+        // ----------------------------------------------------
+
+        auto frameButton =
+            CCMenuItemSpriteExtra::create(
+                ButtonSprite::create(
+                    "FRAME",
+                    "bigFont.fnt",
+                    "GJ_button_01.png",
+                    0.65f
+                ),
+                this,
+                menu_selector(ModMenu::onFrame)
+            );
+
+        frameButton->setPosition(
+            ccp(110.f, 125.f)
         );
 
-        rightBG->setPosition(
-            ccp(
-                225.f,
-                size.height / 2
+        this->m_buttonMenu->addChild(frameButton);
+
+        // ----------------------------------------------------
+        // Playback
+        // ----------------------------------------------------
+
+        auto playbackButton =
+            CCMenuItemSpriteExtra::create(
+                ButtonSprite::create(
+                    "PLAYBACK",
+                    "bigFont.fnt",
+                    "GJ_button_01.png",
+                    0.65f
+                ),
+                this,
+                menu_selector(ModMenu::onPlayback)
+            );
+
+        playbackButton->setPosition(
+            ccp(310.f, 125.f)
+        );
+
+        this->m_buttonMenu->addChild(playbackButton);
+
+        return true;
+    }
+
+    void onMacro(CCObject*) {
+
+        FLAlertLayer::create(
+            "SM Macro",
+            "SM Macro\n\n"
+            "Record\n"
+            "Playback\n"
+            "Native format: .sm",
+            "BACK"
+        )->show();
+    }
+
+    void onPathfinder(CCObject*) {
+
+        std::string text =
+            "Pathfinder\n\n"
+            "Status: ";
+
+        text += g_pathfinder.running()
+            ? "RUNNING"
+            : "STOPPED";
+
+        text +=
+            "\n\nSearch Depth: " +
+            std::to_string(
+                g_pathfinder.searchDepth()
+            );
+
+        text +=
+            "\nAttempts: " +
+            std::to_string(
+                g_pathfinder.attempts()
+            );
+
+        FLAlertLayer::create(
+            "Pathfinder",
+            text,
+            "BACK"
+        )->show();
+    }
+
+    void onFrame(CCObject*) {
+
+        FLAlertLayer::create(
+            "Frame Tools",
+            "Frame Counter\n"
+            "Frame Window\n"
+            "Frame Stepper\n"
+            "Event Viewer",
+            "BACK"
+        )->show();
+    }
+
+    void onPlayback(CCObject*) {
+
+        FLAlertLayer::create(
+            "Playback",
+            "SM Playback\n"
+            "Frame-accurate input\n"
+            "Music synchronization\n"
+            "Press / Release events",
+            "BACK"
+        )->show();
+    }
+};
+
+// ============================================================
+// Open Mod Menu
+// ============================================================
+
+void openSMMenu() {
+
+    auto menu = ModMenu::create();
+
+    if (menu) {
+        menu->show();
+    }
+}
+
+// ============================================================
+// Geometry Dash main menu
+// ============================================================
+
+class $modify(UltimateGDToolkitMenu, MenuLayer) {
+
+    bool init() {
+
+        if (!MenuLayer::init())
+            return false;
+
+        auto menu = this->getChildByID(
+            "bottom-menu"
+        );
+
+        if (!menu) {
+
+            log::error(
+                "Ultimate GD Toolkit: bottom-menu not found"
+            );
+
+            return true;
+        }
+
+        // ----------------------------------------------------
+        // Toolkit button
+        // ----------------------------------------------------
+
+        if (!menu->getChildByID(
+            "ultimate-gd-toolkit-button"_spr
+        )) {
+
+            auto sprite = ButtonSprite::create(
+                "Toolkit",
+                "bigFont.fnt",
+                "GJ_button_01.png",
+                0.8f
+            );
+
+            sprite->setScale(0.55f);
+
+            auto button =
+                CCMenuItemSpriteExtra::create(
+                    sprite,
+                    this,
+                    menu_selector(
+                        UltimateGDToolkitMenu::onToolkit
+                    )
+                );
+
+            button->setID(
+                "ultimate-gd-toolkit-button"_spr
+            );
+
+            menu->addChild(button);
+        }
+
+        // ----------------------------------------------------
+        // Mod Menu button
+        // ----------------------------------------------------
+
+        if (!menu->getChildByID(
+            "ultimate-gd-mod-menu-button"_spr
+        )) {
+
+            auto sprite = ButtonSprite::create(
+                "Mod Menu",
+                "bigFont.fnt",
+                "GJ_button_01.png",
+                0.8f
+            );
+
+            sprite->setScale(0.55f);
+
+            auto button =
+                CCMenuItemSpriteExtra::create(
+                    sprite,
+                    this,
+                    menu_selector(
+                        UltimateGDToolkitMenu::onModMenu
+                    )
+                );
+
+            button->setID(
+                "ultimate-gd-mod-menu-button"_spr
+            );
+
+            menu->addChild(button);
+        }
+
+        menu->updateLayout();
+
+        log::info(
+            "Ultimate GD Toolkit: buttons loaded"
+        );
+
+        return true;
+    }
+
+    void onToolkit(CCObject*) {
+
+        FLAlertLayer::create(
+            "Ultimate GD Toolkit",
+            "Toolkit button\n\n"
+            "The main Toolkit systems will be connected here.",
+            "OK"
+        )->show();
+    }
+
+    void onModMenu(CCObject*) {
+
+        openSMMenu();
+    }
+};
+
+// ============================================================
+// Mod loaded
+// ============================================================
+
+$on_mod(Loaded) {
+
+    log::info(
+        "Ultimate GD Toolkit loaded successfully!"
+    );
+
+}
+
+}
