@@ -1,0 +1,11 @@
+{
+  "geode": "5.10.1",
+  "gd": {
+    "android": "2.2081"
+  },
+  "id": "modmaker.ultimate-gd-toolkit",
+  "name": "Ultimate GD Toolkit",
+  "version": "v0.2.1",
+  "developer": "modmaker",
+  "description": "Ultimate GD Toolkit for Geometry Dash Android. We Have A High Accuracy Macro."
+}
