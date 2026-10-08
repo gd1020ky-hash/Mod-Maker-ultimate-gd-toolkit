@@ -10,7 +10,7 @@ namespace sm {
 static Pathfinder g_pathfinder;
 
 // ============================================================
-// Pathfinder
+// Existing Pathfinder functions
 // ============================================================
 
 void Pathfinder::start() {
@@ -25,16 +25,11 @@ void Pathfinder::stop() {
 
 void Pathfinder::retry() {
     ++m_attempts;
-    log::info(
-        "Ultimate GD Toolkit: Pathfinder retry #{}",
-        m_attempts
-    );
+    log::info("Ultimate GD Toolkit: Pathfinder retry #{}", m_attempts);
 }
 
 void Pathfinder::verify() {
-    log::info(
-        "Ultimate GD Toolkit: Pathfinder verification requested"
-    );
+    log::info("Ultimate GD Toolkit: Pathfinder verification requested");
 }
 
 bool Pathfinder::running() const {
@@ -51,11 +46,6 @@ uint32_t Pathfinder::searchDepth() const {
 
 void Pathfinder::setSearchDepth(uint32_t depth) {
     m_searchDepth = std::max<uint32_t>(1, depth);
-
-    log::info(
-        "Ultimate GD Toolkit: Pathfinder search depth = {}",
-        m_searchDepth
-    );
 }
 
 // ============================================================
@@ -67,151 +57,82 @@ bool RouteExporter::exportRoute(
     ExportFormat format,
     std::string const& path
 ) {
-    // Export formats will be implemented later.
-    // Do NOT pretend these are valid exports yet.
     (void)route;
     (void)format;
     (void)path;
 
-    log::info(
-        "Ultimate GD Toolkit: route export requested"
-    );
-
+    log::info("Ultimate GD Toolkit: export requested");
     return false;
 }
 
 // ============================================================
-// Toolkit popup
+// Main Toolkit menu
 // ============================================================
 
-void openSMMenu() {
-    FLAlertLayer::create(
-        "Ultimate GD Toolkit",
+class ToolkitMenu : public geode::Popup<> {
+protected:
 
-        "<cy>SM Macro</c>\n"
-        "Record / Playback\n\n"
+    CCLabelBMFont* m_title = nullptr;
+    CCLabelBMFont* m_pageTitle = nullptr;
+    CCLabelBMFont* m_content = nullptr;
 
-        "<cy>Frame Tools</c>\n"
-        "Frame counter / frame window\n\n"
+    CCMenu* m_tabs = nullptr;
 
-        "<cy>Pathfinder</c>\n"
-        "Search / Retry / Verify\n\n"
+    int m_currentTab = 0;
 
-        "<cy>Route Tools</c>\n"
-        "SM / GDR / GDR2 / ECHO\n\n"
+    enum Tab {
+        Macro = 0,
+        PathfinderTab = 1,
+        FrameTools = 2,
+        Playback = 3,
+        Routes = 4,
+        Settings = 5,
+        Themes = 6
+    };
 
-        "<d>More Ultimate GD Toolkit features "
-        "are coming soon.</d>",
+    bool setup() override {
 
-        "OK"
-    )->show();
-}
+        this->setTitle("Ultimate GD Toolkit");
 
-// ============================================================
-// Mobile main-menu button
-// ============================================================
+        auto size = this->m_mainLayer->getContentSize();
 
-class $modify(UltimateGDToolkitMenu, MenuLayer) {
+        // ----------------------------------------------------
+        // Left tab panel
+        // ----------------------------------------------------
 
-    bool init() {
-        if (!MenuLayer::init())
-            return false;
-
-        // Find Geometry Dash's existing bottom menu.
-        auto menu = this->getChildByID("bottom-menu");
-
-        if (!menu) {
-            log::error(
-                "Ultimate GD Toolkit: bottom-menu not found"
-            );
-
-            return true;
-        }
-
-        // Prevent duplicate buttons if the menu is initialized
-        // more than once.
-        if (menu->getChildByID("ultimate-gd-toolkit-button"_spr)) {
-            return true;
-        }
-
-        // Create the button.
-        auto sprite = ButtonSprite::create(
-            "Toolkit",
-            "bigFont.fnt",
-            "GJ_button_01.png",
-            0.8f
+        auto leftBG = CCScale9Sprite::create(
+            "square02b_001.png"
         );
 
-        if (!sprite) {
-            log::error(
-                "Ultimate GD Toolkit: failed to create button sprite"
-            );
-
-            return true;
-        }
-
-        // Make it compact enough for the mobile menu.
-        sprite->setScale(0.55f);
-
-        auto button = CCMenuItemSpriteExtra::create(
-            sprite,
-            this,
-            menu_selector(UltimateGDToolkitMenu::onToolkitButton)
+        leftBG->setContentSize(
+            CCSize(125.f, size.height - 45.f)
         );
 
-        if (!button) {
-            log::error(
-                "Ultimate GD Toolkit: failed to create menu button"
-            );
-
-            return true;
-        }
-
-        // Give the button a Geode namespaced ID.
-        button->setID("ultimate-gd-toolkit-button"_spr);
-
-        // Add it to Geometry Dash's existing mobile menu.
-        menu->addChild(button);
-
-        // Let the existing layout automatically position it.
-        menu->updateLayout();
-
-        log::info(
-            "Ultimate GD Toolkit: mobile Toolkit button added"
+        leftBG->setPosition(
+            ccp(
+                70.f,
+                size.height / 2.f
+            )
         );
 
-        return true;
-    }
+        this->m_mainLayer->addChild(leftBG);
 
-    void onToolkitButton(CCObject*) {
-        log::info(
-            "Ultimate GD Toolkit: button pressed"
+        // ----------------------------------------------------
+        // Right content panel
+        // ----------------------------------------------------
+
+        auto rightBG = CCScale9Sprite::create(
+            "square02b_001.png"
         );
 
-        openSMMenu();
-    }
-};
+        rightBG->setContentSize(
+            CCSize(
+                size.width - 155.f,
+                size.height - 45.f
+            )
+        );
 
-// ============================================================
-// Mod loaded
-// ============================================================
-
-$on_mod(Loaded) {
-    log::info(
-        "========================================"
-    );
-
-    log::info(
-        "Ultimate GD Toolkit loaded!"
-    );
-
-    log::info(
-        "Mobile Toolkit button enabled."
-    );
-
-    log::info(
-        "========================================"
-    );
-}
-
-}
+        rightBG->setPosition(
+            ccp(
+                225.f,
+                size.height / 2
